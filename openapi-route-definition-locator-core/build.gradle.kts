@@ -2,17 +2,11 @@ plugins {
     id("openapi-route-definition-locator.common-java-library")
 }
 
-java {
-    registerFeature("metrics") {
-        usingSourceSet(sourceSets["main"])
-    }
-}
-
 dependencies {
-    "metricsApi"("io.micrometer:micrometer-core")
+    compileOnly("io.micrometer:micrometer-core")
     implementation("org.springframework.cloud:spring-cloud-gateway-server")
     implementation("org.springframework:spring-webflux")
-    implementation("io.swagger.parser.v3:swagger-parser:2.1.16")
+    implementation("io.swagger.parser.v3:swagger-parser:2.1.22")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 }
 
@@ -73,7 +67,7 @@ signing {
 // Inspired by <https://github.com/spring-gradle-plugins/dependency-management-plugin/issues/257#issuecomment-895790557>.
 tasks.withType<GenerateMavenPom>().all {
     doLast {
-        val file = File("$buildDir/publications/mavenJava/pom-default.xml")
+        val file = layout.buildDirectory.file("publications/mavenJava/pom-default.xml").get().asFile
         var text = file.readText()
         val regex = "(?s)(<dependencyManagement>.+?<dependencies>)(.+?)(</dependencies>.+?</dependencyManagement>)".toRegex()
         val matcher = regex.find(text)

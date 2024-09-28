@@ -2,23 +2,17 @@ plugins {
     id("openapi-route-definition-locator.common-java-library")
 }
 
-java {
-    registerFeature("metrics") {
-        usingSourceSet(sourceSets["main"])
-    }
-}
-
 dependencies {
     api(project(":openapi-route-definition-locator-core"))
-    "metricsApi"("io.micrometer:micrometer-core")
-    "metricsImplementation"("org.springframework.boot:spring-boot-actuator-autoconfigure")
     implementation("org.springframework.cloud:spring-cloud-gateway-server")
     annotationProcessor("org.springframework.boot:spring-boot-autoconfigure-processor")
+    compileOnly("io.micrometer:micrometer-core")
 
     testImplementation("org.springframework.cloud:spring-cloud-starter-gateway")
+    testImplementation("org.springframework.boot:spring-boot-actuator-autoconfigure")
     testRuntimeOnly("org.springframework.boot:spring-boot-starter-actuator")
     testRuntimeOnly("io.micrometer:micrometer-registry-prometheus")
-    testImplementation("com.github.tomakehurst:wiremock-jre8-standalone:2.35.0")
+    testImplementation("org.wiremock:wiremock-standalone:3.5.3")
     testImplementation("org.apache.commons:commons-lang3")
 }
 
@@ -79,7 +73,7 @@ signing {
 // Inspired by <https://github.com/spring-gradle-plugins/dependency-management-plugin/issues/257#issuecomment-895790557>.
 tasks.withType<GenerateMavenPom>().all {
     doLast {
-        val file = File("$buildDir/publications/mavenJava/pom-default.xml")
+        val file = layout.buildDirectory.file("publications/mavenJava/pom-default.xml").get().asFile
         var text = file.readText()
         val regex = "(?s)(<dependencyManagement>.+?<dependencies>)(.+?)(</dependencies>.+?</dependencyManagement>)".toRegex()
         val matcher = regex.find(text)

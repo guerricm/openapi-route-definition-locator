@@ -23,6 +23,9 @@ import net.bretti.openapi.route.definition.locator.core.config.validation.OnlyUn
 import net.bretti.openapi.route.definition.locator.core.config.validation.ValidBaseUri;
 import net.bretti.openapi.route.definition.locator.core.config.validation.ValidOpenApiDefinitionUri;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.gateway.filter.FilterDefinition;
+import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
+import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.Valid;
@@ -32,7 +35,10 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @ConfigurationProperties(prefix = "openapi-route-definition-locator")
 @Validated
@@ -48,6 +54,13 @@ public class OpenApiRouteDefinitionLocatorProperties {
     @Valid
     @OnlyUniqueServiceIds
     private List<Service> services = new ArrayList<>();
+
+    /**
+     * Settings that should be added to all {@link RouteDefinition}s created for the configured
+     * {@link OpenApiRouteDefinitionLocatorProperties#services}.
+     */
+    @Valid
+    private DefaultRouteSettings defaultRouteSettings = new DefaultRouteSettings();
 
     /**
      * Configures the scheduler which periodically retrieves the OpenAPI definitions from
@@ -84,13 +97,19 @@ public class OpenApiRouteDefinitionLocatorProperties {
          * The URI of the OpenAPI definition to be retrieved from the service.
          * This generally is a relative URI; relative to the service's base URI.
          * But it can also be an absolute URI. As the OpenAPI definition is loaded
-         * via Spring's <a href="https://docs.spring.io/spring-framework/docs/5.3.24/reference/html/core.html#resources-resourceloader">
+         * via Spring's <a href="https://docs.spring.io/spring-framework/reference/core/resources.html#resources-resourceloader">
          * ResourceLoader</a>, you can use schemas such as {@code http:}, {@code https:}, {@code file:} or
          * {@code classpath:}. The default is the value of the property
          * {@code openapi-route-definition-locator.openapi-definition-uri}.
          */
         @ValidOpenApiDefinitionUri
         private URI openapiDefinitionUri;
+
+        /**
+         * Settings that should be applied to all {@link RouteDefinition}s created for this service.
+         */
+        @Valid
+        private DefaultRouteSettings defaultRouteSettings = new DefaultRouteSettings();
     }
 
     @Data
@@ -112,4 +131,32 @@ public class OpenApiRouteDefinitionLocatorProperties {
         private Duration removeRoutesOnUpdateFailuresAfter = Duration.of(15, ChronoUnit.MINUTES);
     }
 
+    /**
+     * Settings that should be applied to all created {@link RouteDefinition}s. Contains a subset of the attributes of a
+     * {@link RouteDefinition}.
+     */
+    @Data
+    public static class DefaultRouteSettings {
+        /**
+         * The predicates that should be added to the created {@link RouteDefinition}s.
+         */
+        @Valid
+        private List<PredicateDefinition> predicates = new ArrayList<>();
+
+        /**
+         * The filters that should be added to the created {@link RouteDefinition}s.
+         */
+        @Valid
+        private List<FilterDefinition> filters = new ArrayList<>();
+
+        /**
+         * The metadata that should be added to the created {@link RouteDefinition}s.
+         */
+        private Map<String, Object> metadata = new HashMap<>();
+
+        /**
+         * The order that should be applied to the created {@link RouteDefinition}s.
+         */
+        private Optional<Integer> order = Optional.empty();
+    }
 }
